@@ -17,6 +17,7 @@ class Item:
         self.height = height
         self.depth = depth
         self.weight = weight
+        self.area = height * width
         self.rotation_type = 0
         self.position = START_POSITION
         self.number_of_decimals = DEFAULT_NUMBER_OF_DECIMALS
@@ -258,8 +259,10 @@ class Packer:
         self.unfit_items = []
         self.total_items = 0
         self.TWO_D_MODE=TWO_D_MODE
+        print("Packer init")
 
     def add_bin(self, bin):
+        print("add bin")
         return self.bins.append(bin)
 
     def add_item(self, item):
@@ -269,7 +272,6 @@ class Packer:
 
     def pack_to_bin(self, bin, item):
         fitted = False
-
         if not bin.items:
             if self.TWO_D_MODE:
                 response=bin.put_item_only_2D_rotate(item, START_POSITION)
@@ -319,11 +321,50 @@ class Packer:
 
         if not fitted:
             bin.unfitted_items.append(item)
+    def pack_to_bin_self_def(self, pos, limit_h, limit_w, Items, num_items, bin):
+        if(num_items == 0):
+            return
+
+        vsp = [pos]
+        #put in Bin
+        next_board = []
+        remain_items = []
+        for i in range(len(Items)):
+            pos_erase = -1
+            p = [-1,-1,-1]
+            p1 = [-1,-1,-1]
+            p2 = [-1,-1,-1]
+            for pos_i in range(len(vsp)):
+                # find valid position
+                if Items[i].height <= limit_h and Items[i].width <= limit_w and vsp[pos_i][0] + Items[i].height <= bin.height and vsp[pos_i][1] + Items[i].width <= bin.width and vsp[pos_i][2] + Items[i].depth <= bin.depth:
+                    pos_erase = pos_i
+                    p = vsp[pos_i]
+                    Items[i].position = p
+                    print(str(Items[i].ID) + ": " + str(Items[i].position))
+                    next_board.append([[p[0], p[1], p[2] + Items[i].depth], Items[i].height, Items[i].width])
+                    p1 = [p[0] + Items[i].height, p[1], p[2]]
+                    p2 = [p[0], p[1] + Items[i].width, p[2]]
+                    break
+
+            if pos_erase != -1:    
+                vsp.pop(pos_erase)
+                vsp.append(p1)
+                vsp.append(p2)
+            else:
+                remain_items.append(Items[i])
+
+        if len(remain_items) == num_items:
+            return
+
+        num_items = len(remain_items)
+        for b in next_board:
+            self.pack_to_bin_self_def(b[0], b[1], b[2], remain_items, num_items)
 
     def pack(
         self, bigger_first=False, distribute_items=False,
         number_of_decimals=DEFAULT_NUMBER_OF_DECIMALS
     ):
+        print("into pack()")
         for bin in self.bins:
             bin.format_numbers(number_of_decimals)
 
@@ -337,10 +378,21 @@ class Packer:
             key=lambda item: item.get_volume(), reverse=bigger_first
         )
 
+        for it in self.items:
+            l = [it.width, it.height, it.depth].sort()
+            it.depth, it.width, it.height = l[0], l[1], l[2]
+
+        self.items.sort(key = lambda s: s.area, reverse = True)
+        print(f'{self.bins=}')
         for bin in self.bins:
-            for item in self.items:
-                self.pack_to_bin(bin, item)
+            # bin.height, bin.width = bin.width, bin.height
+            print(f'{bin.height=}')
+            print(f'{bin.width=}')
+            print(f'{bin.depth=}')
+
+            self.pack_to_bin_self_def(START_POSITION, bin.height, bin.width, self.items, len(self.items), bin)
 
             if distribute_items:
                 for item in bin.items:
                     self.items.remove(item)
+
