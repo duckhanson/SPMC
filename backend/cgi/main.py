@@ -838,34 +838,35 @@ class Packer:
         next_board = []
         remain_items = []
         for i in range(len(Items)):
-            if Items[i].weight + bin.weight > bin.max_weight:
-                continue
+            # if Items[i].weight + bin.weight > bin.max_weight:
+            #     continue
             pos_erase = -1
             p = [-1,-1,-1]
             p1 = [-1,-1,-1]
             p2 = [-1,-1,-1]
             for pos_i in range(len(vsp)):
                 # find valid start position
-                already_put = False
-                for rtt in range(6):
-                    if already_put:
-                        break
-                    Items[i].rotate(rtt)
-                    if Items[i].get_depth() <= limit_d and Items[i].get_width() <= limit_w and vsp[pos_i][0] + Items[i].get_depth() <= bin.depth and vsp[pos_i][1] + Items[i].get_width() <= bin.width and vsp[pos_i][2] + Items[i].get_height() <= bin.height:
-                        pos_erase = pos_i
-                        p = vsp[pos_i]
-                        # print(f'{p=}')
-                        Items[i].position = [p[1], p[2], p[0]]
-                        # print(f'{Items[i].position=}')
-                        bin.put_item(Items[i], Items[i].position)
-                        bin.weight += Items[i].weight
-                        # print(str(Items[i].ID) + ": " + str(Items[i].position))
-                        next_board.append([[p[0], p[1], p[2] + Items[i].get_height()], Items[i].get_depth(), Items[i].get_width()])
-                        p1 = [p[0] + Items[i].get_depth(), p[1], p[2]]
-                        p2 = [p[0], p[1] + Items[i].get_width(), p[2]]
-                        already_put = True
-                if already_put:
+                # already_put = False
+                # for rtt in range(6):
+                #     if already_put:
+                #         break
+                    # Items[i].rotate(rtt)
+                if Items[i].get_depth() <= limit_d and Items[i].get_width() <= limit_w and vsp[pos_i][0] + Items[i].get_depth() <= bin.depth and vsp[pos_i][1] + Items[i].get_width() <= bin.width and vsp[pos_i][2] + Items[i].get_height() <= bin.height:
+                    pos_erase = pos_i
+                    p = vsp[pos_i]
+                    # print(f'{p=}')
+                    Items[i].position = [p[1], p[2], p[0]]
+                    # print(f'{Items[i].position=}')
+                    bin.put_item(Items[i], Items[i].position)
+                    bin.weight += Items[i].weight
+                    # print(str(Items[i].ID) + ": " + str(Items[i].position))
+                    next_board.append([[p[0], p[1], p[2] + Items[i].get_height()], Items[i].get_depth(), Items[i].get_width()])
+                    p1 = [p[0] + Items[i].get_depth(), p[1], p[2]]
+                    p2 = [p[0], p[1] + Items[i].get_width(), p[2]]
                     break
+                        # already_put = True
+                # if already_put:
+                #     break
                 
 
             if pos_erase != -1:    
